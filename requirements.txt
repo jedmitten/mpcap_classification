@@ -1,0 +1,7 @@
+tensorflow
+jupyter
+jupyterlab
+pandas
+scapy
+scikit-learn
+fastparquet
