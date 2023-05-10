@@ -277,8 +277,8 @@ def main():
     log.debug(f"benign_df.shape: {benign_df.shape}")
     log.debug(f"malware_df.shape: {malware_df.shape}")
 
-    b_parquet = "benign_features.parquet"
-    m_parquet = "malicious_features.parquet"
+    b_parquet = "./data/benign_features.parquet"
+    m_parquet = "./data/malicious_features.parquet"
     log.info(f"Writing output bengign dataframe (with {benign_df.shape[0]} rows) to: {b_parquet}")
     benign_df.to_parquet(b_parquet)
     log.info(f"Writing output malicious dataframe (with {malware_df.shape[0]} rows) to: {m_parquet}")
