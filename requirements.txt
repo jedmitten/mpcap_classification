@@ -1,7 +1,9 @@
 tensorflow
+cloud-tpu-client
 jupyter
 jupyterlab
 pandas
 scapy
 scikit-learn
-fastparquet
+# fastparquet
+pyarrow

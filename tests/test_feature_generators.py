@@ -2,7 +2,7 @@
 Right now just manually check individual packets to see if they're parsed correctly
 """
 
-from demo_script import *
+from generate_features import *
 
 
 def test_gen_http_request_features(http_request_packet):

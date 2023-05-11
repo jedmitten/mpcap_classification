@@ -10,7 +10,7 @@ def get_git_root(path):
         git_root = git_repo.git.rev_parse("--show-toplevel")
         return git_root
     
-data_dir = Path(get_git_root(".")) / "data'"
+data_dir = Path(get_git_root(".")) / "data"
 
 
 @pytest.fixture(scope="module")
