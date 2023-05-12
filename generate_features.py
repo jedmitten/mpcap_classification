@@ -119,11 +119,12 @@ def identify_layers(pkt: sp.Packet) -> App:
 
 
 def decode_if_able(d: Dict, key_filter: List[str] = None) -> Dict:
+    ALWAYS_FILTER = ["flags"]
     if key_filter is None:
         key_filter = []
     outd = {}
     for k, v in d.items():
-        if k in key_filter:
+        if k in key_filter + ALWAYS_FILTER:
             continue
         k = k.lower()
         try:
@@ -218,8 +219,8 @@ def parse_data(pkt: sp.Packet, app: App) -> Dict:
 
 def get_url(d: dict) -> str:
     if d is None:
-        return ""
-    url = ""
+        return None
+    url = None
     if "host" in d:
         url = d["host"]
     if "qname" in d:
@@ -229,6 +230,17 @@ def get_url(d: dict) -> str:
     if url.endswith("."):
         url = url[:-1]
     return url
+
+def get_tld(s):
+    bd = get_base_domain(s)
+    if not bd:
+        return None
+    # split off the first part
+    parts = bd.split(".", maxsplit=1)
+    if len(parts) > 1:
+        parts.pop(0)
+        return parts[0]
+    return bd
     
 def get_base_domain(s: str) -> str:
     if not isinstance(s, str):
@@ -271,7 +283,7 @@ def make_rows(pkts: sp.PacketList) -> List[Dict]:
         log.debug(f"Identified proto as {proto}")
         try:
             if sp.IP not in pkt:
-                log.debug("Skipping packet with IP layer.")
+                log.debug("Skipping packet without IP layer.")
                 continue
             try:
                 pkt[proto].sport
@@ -292,6 +304,7 @@ def make_rows(pkts: sp.PacketList) -> List[Dict]:
                 log.debug(f"Found app layer {layer} in packet. Parsing...")
                 parsed = parse_data(pkt, layer)
             url = get_url(parsed)
+            tld = get_tld(url)
             base_domain = get_base_domain(url)
             host = get_host_part(url)
             row = {
@@ -307,6 +320,7 @@ def make_rows(pkts: sp.PacketList) -> List[Dict]:
                 "ip_packet_cache": pkt[sp.IP].raw_packet_cache,
                 "parsed": parsed,
                 "url": url,
+                "tld": tld,
                 "base_domain": base_domain,
                 "host": host,
             }
@@ -350,3 +364,5 @@ def main():
 
 if __name__ == "__main__":
     main()
+
+# %%
