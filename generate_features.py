@@ -413,6 +413,9 @@ def main():
         tmp_df["dest_ip_class_b"] = tmp_df.dest_addr.apply(lambda x: get_net_class(x, "B"))
         tmp_df["dest_ip_class_c"] = tmp_df.dest_addr.apply(lambda x: get_net_class(x, "C"))
         
+    malware_df["malware"] = 1.0
+    benign_df["malware"] = 0.0
+        
 
     b_pkl = "./data/benign_features.pkl"
     m_pkl = "./data/malicious_features.pkl"

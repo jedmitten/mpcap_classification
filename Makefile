@@ -24,6 +24,9 @@ readme:
 	@cat markdown/running.md >> README.md
 	@echo "" >> README.md
 	@echo "" >> README.md
+	@cat markdown/testing.md >> README.md
+	@echo "" >> README.md
+	@echo "" >> README.md
 	@cat markdown/challenge.md >> README.md
 	@echo "" >> README.md
 	@echo "" >> README.md
