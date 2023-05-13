@@ -64,16 +64,23 @@ Note: You do not need to submit an implementation of this pipeline.
 The diagram of the Elastic inference pipeline
 ```mermaid
 flowchart LR
+    subgraph Jupyter & Python: Feature Collection & Extraction
     NBD[(Network Batch Data)]
     NSD[/Network Streaming Data/]
     NBD --> FTG{{Feature Transforms / Generator}}
     NSD --> FTG
-    FTG --> FR[(Feast Feature Registry)]
-    FTG --> DL[(Data Lake)]
+    end
+    subgraph Feast: Feature Storage
+    FTG --> FR[(Feature Registry)]
+    FTG --> DL[(Data Lake storing network data </br> enriched with features)]
+    end
+    subgraph KubeFlow: Model Training, Deployment, & Registration 
     FR --> ModTrn{{Model Training}}
-    NTD[(Network Training Data)] --> ModTrn
     ModTrn --> MR[(Model Registry)]
-    MR --> MD[Model Deployment]
-    MD --> PD{{Prediction Testing}}
+    MR --> MD[TensorFlow Model Deployment]
+    MD --> PD{{Online Prediction Testing}}
+    end
+    subgraph UI
     MR --> Elastic[Elastic]
-```
+    end
+ ```
