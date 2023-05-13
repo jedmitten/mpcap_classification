@@ -1,20 +1,3 @@
-# Research Challenge: Malware Classification based on Network  Packet Captures 
-
-## Background
-This repository is part of the interview process of adAPT machine learning security researchers.  The challenge is described below. The Elastic model deployment pipeline that is part of the deliverables of this project is found at [this link](#diagram) (and below).
-
-
-# Running the code
-## Virtual Environment Init
-* `make init` 
-* That will install virtual environment and install both `requirements.txt` and `requirements-dev.txt`
-## Feature generation
-* At the command prompt `make features`
-* That will run `generate_features.py` and output files to `./data`
-   * `benign_features.pkl`
-   * `malicious_features.pkl`
-* Those files are used by the notebook (`build_and_run_model.ipynb`)
-
 ## Introduction 
 Brief overview of malware classifica0on 
 
@@ -70,29 +53,3 @@ Note: You do not need to submit an implementation of this pipeline.
    * results, and 
    * how you can improve upon your results. 
 * A diagram of a pipeline for your model deployed in Elastic. Describe this diagram in a section of  your report.
-
-## Diagram
-The diagram of the Elastic inference pipeline
-```mermaid
-flowchart LR
-    subgraph Jupyter & Python: Feature Collection & Extraction
-    NBD[(Network Batch Data)]
-    NSD[/Network Streaming Data/]
-    NBD --> FTG{{Feature Transforms / Generator}}
-    NSD --> FTG
-    end
-    subgraph Feast: Feature Storage
-    FTG --> FR[(Feature Registry)]
-    FTG --> DL[(Data Lake storing network data </br> enriched with features)]
-    end
-    subgraph KubeFlow: Model Training, Deployment, & Registration 
-    FR --> ModTrn{{Model Training}}
-    ModTrn --> MR[(Model Registry)]
-    MR --> MD[TensorFlow Model Service]
-    MD --> PD{{Online Prediction Testing}}
-    PD -- iterate --> MR
-    end
-    subgraph Elastic UI & Model Inference
-    MR --> Elastic[Elastic]
-    end
- ```
