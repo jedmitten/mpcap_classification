@@ -82,6 +82,6 @@ flowchart LR
     PD -- iterate --> MR
     end
     subgraph Elastic UI & Model Inference
-    MD --> Elastic[Elastic]
+    MR --> Elastic[Elastic]
     end
  ```
