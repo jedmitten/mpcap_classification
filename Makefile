@@ -3,6 +3,8 @@ PYTHON = $(VENV)/bin/python
 PIP = $(VENV)/bin/pip
 SHELL = zsh
 
+.PHONY: init clean features
+
 
 init:
 	python -m venv $(VENV)
@@ -11,3 +13,6 @@ init:
 
 clean:
 	rm -rf $(VENV)
+
+features:
+	$(PYTHON) generate_features.py

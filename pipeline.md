@@ -1,9 +1,15 @@
 ```mermaid
 flowchart LR
-    A[Network Data] --> B[Feature Generator]
-    B --> C[Feature Registry]
-    C --> D[Model Training]
-    D --> E[Model Registry]
-    E --> F[Model Deployment]
-    F --> G[Testing]
+    NBD[(Network Batch Data)]
+    NSD[/Network Streaming Data/]
+    NBD --> FTG{{Feature Transforms / Generator}}
+    NSD --> FTG
+    FTG --> FR[(Feast Feature Registry)]
+    FTG --> DL[(Data Lake)]
+    FR --> ModTrn{{Model Training}}
+    NTD[(Network Training Data)] --> ModTrn
+    ModTrn --> MR[(Model Registry)]
+    MR --> MD[Model Deployment]
+    MD --> PD{{Prediction Testing}}
+    MR --> Elastic[Elastic]
 ```

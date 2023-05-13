@@ -1,20 +1,20 @@
 # %%
 import logging
 
-logging.basicConfig(
-    format="%(asctime)s ; %(levelname)s ; %(message)s",
-    level=logging.INFO
-)
+logging.basicConfig(format="%(asctime)s ; %(levelname)s ; %(message)s", level=logging.INFO)
 logging.getLogger("scapy").setLevel(logging.CRITICAL)
-log = logging.getLogger("adAPT")
+logger = logging.getLogger("adAPT")
 
+from datetime import datetime
 from pathlib import Path
 from collections import Counter
 from time import perf_counter
-from typing import Any, Dict, List
+from typing import Any, Dict, List, Tuple
+from math import log
 
 # import tensorflow as tf
 import pandas as pd
+
 # import numpy as np
 from scapy import all as sp
 from scapy.layers.http import HTTP, HTTPRequest, HTTPResponse
@@ -36,7 +36,7 @@ MALWAR_FILES = list([f for f in MALWAR_DIR.iterdir() if str(f).endswith(".pcap")
 
 assert BENIGN_DIR.exists(), "Benign dir cannot be found"
 assert MALWAR_DIR.exists(), "Malware dir cannot be found"
-log.debug(f"Loaded files in {perf_counter() - perf_start} seconds.")
+logger.debug(f"Loaded files in {perf_counter() - perf_start} seconds.")
 
 EXCLUDE_NAMES = ["Ethernet", "802.3", "cooked linux", "MPacket Preamble"]
 INTERESTING_SERVICE_PORTS = [80, 443, 22, 53, 21, 20, 25, 465]
@@ -53,16 +53,15 @@ IGNORE_SERVICE_PORTS + [5246, 5247]  # CAPWAP protocol
 
 
 # ensure no interesting ports are ignored
-IGNORE_SERVICE_PORTS = list(
-    set(IGNORE_SERVICE_PORTS).difference(set(INTERESTING_SERVICE_PORTS))
-)
+IGNORE_SERVICE_PORTS = list(set(IGNORE_SERVICE_PORTS).difference(set(INTERESTING_SERVICE_PORTS)))
+
 
 class Protocol:
     UDP = 17
     IPv4 = 6
     IPv6 = 34525
     IPv6_enc = 41
-    
+
 
 class App:
     Unknown = "Unknown"
@@ -77,9 +76,43 @@ class App:
     DNSQR = "DNSQueryRequest"
     DNSRR = "DNSRequestResponse"
 
-    
+
 HTTP_METHODS = ["GET", "POST", "HEAD", "PUT", "DELETE", "CONNECT", "OPTIONS", "TRACE", "PATCH"]
-    
+
+
+def shannon(counts, thing):
+    frequencies = ((i / len(thing)) for i in counts.values())
+    return -sum(f * log(f, 2) for f in frequencies)
+
+
+def string_shannon(string):
+    counts = Counter(string)
+    return shannon(counts, string)
+
+
+def bytes_shannon(bytes):
+    counts = Counter(bytes)
+    return shannon(counts, bytes)
+
+
+def get_net_class(ip: str, class_type: str) -> Tuple[str]:
+    """For ip = 192.168.1.5, provide the fillowing:
+    ("192", "192.168", "192.168.1", "192.168.1.5")
+    """
+    parts = ip.split(".")
+    if len(parts) != 4:
+        return None
+    if class_type.lower() == "a":
+        return parts[0]
+    elif class_type.lower() == "b":
+        return ".".join(parts[:2])
+    elif class_type.lower() == "c":
+        return ".".join(parts[:3])
+    elif class_type.lower() == "d":
+        return ip
+    else:
+        raise ValueError("Class type must be A, B, C, or D")
+
 
 def get_proto(pkt: sp.Packet) -> Any:
     try:
@@ -92,7 +125,7 @@ def get_proto(pkt: sp.Packet) -> Any:
         return None
     except:
         return None
-    
+
 
 def identify_layers(pkt: sp.Packet) -> App:
     if HTTPRequest in pkt:
@@ -108,7 +141,7 @@ def identify_layers(pkt: sp.Packet) -> App:
     elif sp.Raw in pkt:
         try:
             lines = pkt.load.decode().split("\n")
-            log.debug(f"identifying raw from lines[0]: {lines[0]}")
+            logger.debug(f"identifying raw from lines[0]: {lines[0]}")
             if lines[0].split(" ")[0] in HTTP_METHODS:
                 return App.HTTPRequest
         except Exception as e:
@@ -176,6 +209,7 @@ def gen_http_response_features(pkt: sp.Packet) -> Dict:
     d["raw_text"] = raw_text
     return d
 
+
 def gen_dns_request_features(pkt: sp.Packet) -> Dict:
     qd = {}
     if pkt[DNS].qd:
@@ -195,10 +229,10 @@ def gen_dns_response_features(pkt: sp.Packet) -> Dict:
 
 
 def parse_data(pkt: sp.Packet, app: App) -> Dict:
-    """ Turn a Raw payload into a dictionary of data """
-    log.debug("entering parse_raw...")
+    """Turn a Raw payload into a dictionary of data"""
+    logger.debug("entering parse_raw...")
     if app != App.Unknown:
-        log.debug(f"Identified app: {app}")
+        logger.debug(f"Identified app: {app}")
 
     try:
         if app == App.HTTPRequest:
@@ -211,11 +245,11 @@ def parse_data(pkt: sp.Packet, app: App) -> Dict:
             return gen_dns_response_features(pkt)
         # add other feature generators here
         if sp.Raw in pkt:
-            # log.warning(f"Could not parse {pkt}")
+            # logger.warning(f"Could not parse {pkt}")
             return {"raw": pkt[sp.Raw].load.decode()}
     except Exception as e:
         return {"error": "could not parse packet data"}
-    
+
 
 def get_url(d: dict) -> str:
     if d is None:
@@ -231,6 +265,7 @@ def get_url(d: dict) -> str:
         url = url[:-1]
     return url
 
+
 def get_tld(s):
     bd = get_base_domain(s)
     if not bd:
@@ -241,7 +276,8 @@ def get_tld(s):
         parts.pop(0)
         return parts[0]
     return bd
-    
+
+
 def get_base_domain(s: str) -> str:
     if not isinstance(s, str):
         return s
@@ -257,7 +293,8 @@ def get_base_domain(s: str) -> str:
         return ""  # not a valid tld
     index = index + 1
     parts = s.rsplit(".", maxsplit=index)
-    return ".".join(parts[-1 * index:])
+    return ".".join(parts[-1 * index :])
+
 
 def get_host_part(s: str) -> str:
     if not isinstance(s, str):
@@ -271,19 +308,19 @@ def get_host_part(s: str) -> str:
         tail_length = len(s)
     return s[:tail_length]  # extra -1 to account for trailing "."
 
-    
+
 def make_rows(pkts: sp.PacketList) -> List[Dict]:
-    """ Read a packet, output a dict of values """
-    
-    log.debug(f"Filtering packets on IP, IPv6, and UDP")
+    """Read a packet, output a dict of values"""
+
+    logger.debug(f"Filtering packets on IP, IPv6, and UDP")
 
     for pkt in pkts[sp.IP] + pkts[sp.IPv6] + pkts[sp.UDP]:
         proto = get_proto(pkt)
 
-        log.debug(f"Identified proto as {proto}")
+        logger.debug(f"Identified proto as {proto}")
         try:
             if sp.IP not in pkt:
-                log.debug("Skipping packet without IP layer.")
+                logger.debug("Skipping packet without IP layer.")
                 continue
             try:
                 pkt[proto].sport
@@ -293,7 +330,7 @@ def make_rows(pkts: sp.PacketList) -> List[Dict]:
 
             except:
                 # this is not a packet with necessary attrs
-                # log.warning("Could not find necessary attributes in packet, skipping...")
+                # logger.warning("Could not find necessary attributes in packet, skipping...")
                 continue
             if pkt[proto].sport in IGNORE_SERVICE_PORTS or pkt[proto].dport in IGNORE_SERVICE_PORTS:
                 # skip packets with certain service ports
@@ -301,13 +338,17 @@ def make_rows(pkts: sp.PacketList) -> List[Dict]:
             parsed = None
             layer = identify_layers(pkt)
             if layer != App.Unknown:
-                log.debug(f"Found app layer {layer} in packet. Parsing...")
+                logger.debug(f"Found app layer {layer} in packet. Parsing...")
                 parsed = parse_data(pkt, layer)
             url = get_url(parsed)
             tld = get_tld(url)
             base_domain = get_base_domain(url)
             host = get_host_part(url)
             row = {
+                # I really want to figure out if there's a smart way to check packet rate between
+                # client and server but cannot think of it right now
+                # "time": pkt.time,
+                # "day_hour": datetime.fromtimestamp(pkt.time).strftime("%Y%m%d%H"),
                 "protocol": pkt[proto].name,
                 "app_layer": layer,
                 "source_addr": pkt[sp.IP].src,
@@ -324,20 +365,22 @@ def make_rows(pkts: sp.PacketList) -> List[Dict]:
                 "base_domain": base_domain,
                 "host": host,
             }
-            log.debug(f"Yielding {row}...")
+            logger.debug(f"Yielding {row}...")
             yield row
         except Exception as e:
-            # log.exception(f"Error running make_rows with pkt: {pkt}")
+            # logger.exception(f"Error running make_rows with pkt: {pkt}")
             continue
     
+
+
 def main():
     dfs = []
     for fn in BENIGN_FILES:
         with open(fn, "rb") as f:
-            log.info(f"Reading {fn}...")
+            logger.info(f"Reading {fn}...")
             start_perf = perf_counter()
             rows = list(make_rows(sp.rdpcap(f)))
-            log.info(f"Processing pcap took {perf_counter() - start_perf} seconds.")
+            logger.info(f"Processing pcap took {perf_counter() - start_perf} seconds.")
             dfs.append(pd.DataFrame(rows))
     benign_df = pd.concat(dfs)
 
@@ -345,22 +388,39 @@ def main():
 
     for fn in MALWAR_FILES:
         with open(fn, "rb") as f:
-            log.info(f"Reading {fn}...")
+            logger.info(f"Reading {fn}...")
             start_perf = perf_counter()
             rows = list(make_rows(sp.rdpcap(f)))
-            log.info(f"Processing pcap took {perf_counter() - start_perf} seconds.")
+            logger.info(f"Processing pcap took {perf_counter() - start_perf} seconds.")
             dfs.append(pd.DataFrame(rows))
     malware_df = pd.concat(dfs)
+
+    logger.debug(f"benign_df.shape: {benign_df.shape}")
+    logger.debug(f"malware_df.shape: {malware_df.shape}")
     
-    log.debug(f"benign_df.shape: {benign_df.shape}")
-    log.debug(f"malware_df.shape: {malware_df.shape}")
+    ### More features ###
+    for tmp_df in [malware_df, benign_df]:
+        tmp_df["url_entropy"] = tmp_df.url.apply(lambda x: string_shannon(x) if x is not None else 0)
+        tmp_df["host_entropy"] = tmp_df.host.apply(lambda x: string_shannon(x) if x is not None else 0)
+        tmp_df["base_domain_entropy"] = tmp_df.base_domain.apply(lambda x: string_shannon(x) if x is not None else 0)
+        tmp_df["host_length"] = tmp_df.host.apply(lambda x: len(x) if x is not None else 0)
+        tmp_df["proto_packet_entropy"] = tmp_df.proto_packet_cache.apply(lambda x: bytes_shannon(x) if x is not None else 0)
+
+        tmp_df["source_ip_class_a"] = tmp_df.source_addr.apply(lambda x: get_net_class(x, "A"))
+        tmp_df["source_ip_class_b"] = tmp_df.source_addr.apply(lambda x: get_net_class(x, "B"))
+        tmp_df["source_ip_class_c"] = tmp_df.source_addr.apply(lambda x: get_net_class(x, "C"))
+        tmp_df["dest_ip_class_a"] = tmp_df.dest_addr.apply(lambda x: get_net_class(x, "A"))
+        tmp_df["dest_ip_class_b"] = tmp_df.dest_addr.apply(lambda x: get_net_class(x, "B"))
+        tmp_df["dest_ip_class_c"] = tmp_df.dest_addr.apply(lambda x: get_net_class(x, "C"))
+        
 
     b_pkl = "./data/benign_features.pkl"
     m_pkl = "./data/malicious_features.pkl"
-    log.info(f"Writing output bengign dataframe (with {benign_df.shape[0]} rows) to: {b_pkl}")
+    logger.info(f"Writing output bengign dataframe (with {benign_df.shape[0]} rows) to: {b_pkl}")
     benign_df.to_pickle(b_pkl)
-    log.info(f"Writing output malicious dataframe (with {malware_df.shape[0]} rows) to: {m_pkl}")
+    logger.info(f"Writing output malicious dataframe (with {malware_df.shape[0]} rows) to: {m_pkl}")
     malware_df.to_pickle(m_pkl)
+
 
 if __name__ == "__main__":
     main()
