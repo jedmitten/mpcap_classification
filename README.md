@@ -1,4 +1,7 @@
 # Research Challenge: Malware Classification based on Network  Packet Captures 
+
+## Background
+This repository is part of the interview process of adAPT machine learning security researchers.  The challenge is described below. The Elastic model deployment pipeline that is part of the deliverables of this project is found at (this link)[#diagram]
 ## Introduction 
 Brief overview of malware classifica0on 
 
@@ -54,4 +57,22 @@ Note: You do not need to submit an implementation of this pipeline.
    * results, and 
    * how you can improve upon your results. 
 * A diagram of a pipeline for your model deployed in Elastic. Describe this diagram in a section of  your report.
-Page 3 of 3 
+
+
+## Diagram
+The diagram of the Elastic inference pipeline
+```mermaid
+flowchart LR
+    NBD[(Network Batch Data)]
+    NSD[/Network Streaming Data/]
+    NBD --> FTG{{Feature Transforms / Generator}}
+    NSD --> FTG
+    FTG --> FR[(Feast Feature Registry)]
+    FTG --> DL[(Data Lake)]
+    FR --> ModTrn{{Model Training}}
+    NTD[(Network Training Data)] --> ModTrn
+    ModTrn --> MR[(Model Registry)]
+    MR --> MD[Model Deployment]
+    MD --> PD{{Prediction Testing}}
+    MR --> Elastic[Elastic]
+```
