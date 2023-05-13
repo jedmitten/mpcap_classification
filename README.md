@@ -80,7 +80,7 @@ flowchart LR
     MR --> MD[TensorFlow Model Deployment]
     MD --> PD{{Online Prediction Testing}}
     end
-    subgraph UI
+    subgraph Elastic UI & Model Inference
     MR --> Elastic[Elastic]
     end
  ```
