@@ -77,10 +77,11 @@ flowchart LR
     subgraph KubeFlow: Model Training, Deployment, & Registration 
     FR --> ModTrn{{Model Training}}
     ModTrn --> MR[(Model Registry)]
-    MR --> MD[TensorFlow Model Deployment]
+    MR --> MD[TensorFlow Model Service]
     MD --> PD{{Online Prediction Testing}}
+    PD -- iterate --> MR
     end
     subgraph Elastic UI & Model Inference
-    MR --> Elastic[Elastic]
+    PD --> Elastic[Elastic]
     end
  ```
