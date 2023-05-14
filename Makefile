@@ -28,7 +28,11 @@ readme:
 	@echo "" >> README.md
 	@echo "" >> README.md
 	@cat markdown/challenge.md >> README.md
+	@echo README.md was updated
+
+report:
+	@cat markdown/report_header.md > report.md
 	@echo "" >> README.md
 	@echo "" >> README.md
 	@cat markdown/pipeline_diagram.md >> README.md
-	@echo README.md was updated
+	@echo report.md was updated
