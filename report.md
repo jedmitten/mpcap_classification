@@ -14,7 +14,7 @@ This is the report for adAPT machine learning challenge. This document will
 ## Challenge Description
 In this challenge, I was asked to use network packet captures (pcap files) to classify malware using a machine learning model.
 
-The full set of rules can be identified in [challenge.md](challenge.md) or [README.md](../README.md)
+The full set of rules can be identified in [challenge.md](./markdown/challenge.md) or [README.md](README.md)
 
 ## Solution Implementation
 This section will describe my solution and rationale. The time limit on this challenge forced me to make design decisions that were a working solution vs. a very robust working solution.
