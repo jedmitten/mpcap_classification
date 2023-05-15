@@ -3,7 +3,7 @@ PYTHON = $(VENV)/bin/python
 PIP = $(VENV)/bin/pip
 SHELL = zsh
 
-.PHONY: init clean features readme
+.PHONY: init clean readme report documentation
 
 
 init:
@@ -33,3 +33,5 @@ report:
 	@echo "" >> README.md
 	@cat markdown/pipeline_diagram.md >> README.md
 	@echo report.md was updated
+
+documentation: readme report

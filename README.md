@@ -8,13 +8,20 @@ Please see [report.md](report.md) for the final report required by this exercise
 
 # Running the code
 ## Virtual Environment Init
-* `make init` 
-* That will install virtual environment and install both `requirements.txt` and `requirements-dev.txt`
+There are 2 ways to initialize the virtual environment I used
+1. If you are on POSIX with `make`, you can run `make init` 
+   * That will install virtual environment and install both `requirements.txt` and `requirements-dev.txt`
+2. If you do not have access to the `make` system, simply run
+   1. `python -m venv .venv`
+   2. On POSIX: `./.venv/bin/activate` or on Windows: `.\.venv\Scripts\activate`
+   3. `pip install -r requirements.txt`
+3. Optionally you can install `requirements-dev.txt` for `pytest` and `black`. These libraries are installed with `make init`
 ## Feature generation
 * Run the notebook `feature_generation.ipynb`, which implements all feature generation code (separated out from model generation)
   * Two files are created from this process that are subsequently read as input into `build_and_run_model.ipynb`)
     * `benign_features.pkl`
     * `malicious_features.pkl`
+* This notebook takes approximately 1m 40s to run on my system
 ## Model generation
 * Run the notebook `build_and_run_model.ipynb` to read inputs (above), create training sets, and train the model.
 * The same notebook provides evaluation outputs at the end.
@@ -86,3 +93,29 @@ Note: You do not need to submit an implementation of this pipeline.
    * results, and 
    * how you can improve upon your results. 
 * A diagram of a pipeline for your model deployed in Elastic. Describe this diagram in a section of your report.
+
+## Diagram
+The diagram of the Elastic inference pipeline
+```mermaid
+flowchart LR
+    subgraph Jupyter & Python: Feature Collection & Extraction
+    NBD[(Network Batch Data)]
+    NSD[/Network Streaming Data/]
+    NBD --> FTG{{Feature Transforms / Generator}}
+    NSD --> FTG
+    end
+    subgraph Feast: Feature Storage
+    FTG --> FR[(Feature Registry)]
+    FTG --> DL[(Data Lake storing network data </br> enriched with features)]
+    end
+    subgraph KubeFlow: Model Training, Deployment, & Registration 
+    FR --> ModTrn{{Model Training}}
+    ModTrn --> MR[(Model Registry)]
+    MR --> MD[TensorFlow Model Service]
+    MD --> PD{{Online Prediction Testing}}
+    PD -- iterate --> MR
+    end
+    subgraph Elastic UI & Model Inference
+    MR --> Elastic[Elastic]
+    end
+ ```
