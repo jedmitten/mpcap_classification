@@ -14,9 +14,6 @@ init:
 clean:
 	rm -rf $(VENV)
 
-features:
-	$(PYTHON) generate_features.py
-
 readme:
 	@cat markdown/readme_cruft.md > README.md
 	@echo "" >> README.md
