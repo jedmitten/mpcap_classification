@@ -58,20 +58,36 @@ dest_ip_class_b | derived | True / False (One-Hot Encoded) | Similiar to `dest_i
 dest_ip_class_c | derived | True / False (One-Hot Encoded) | Similiar to `dest_ip_class_a` rationale | The first 3 octets of the destination IP address
 
 ## Model Selection
-Binary classification
+For my model I opted for a supervised binary classification neural network. I chose this model because I already had labelled data and the challenge was to develop a model based on those data. I feel that an unsupervised model would sufficiently identify similar types of software, though it would better serve different questions such as classifying atypical software (anomaly detection) or software that behaves similarly (multi-class categorization).
+
+I used `tensorflow` to implement the neural network.
 
 ## Cross Validation Technique
-60, 20, 20
+For cross-validation, I split the labelled data into 3 parts:
+* 60% for training, 40% for testing and cross-validation
+* Of the 40% for testing and cross-validation, an even split of 20% for each was generated
+
+This technique was highlighted while taking courses on machine learning and this particular situation.
 
 ## Evaluation
 97% classification accuracy
 
 ## Results
+This challenge did not specify how to evaluate results and so I decided to train and test (on both testing and cross-validation sets) to identify whether the model was performing well or not. Finally, I ran the entire data set through the trained model to identify the accuracy of the model on this set of data. 
 
 ## Improvements Upon My Results
 * Feature improvements
-  * Fewer OHE features
-  * Possibly removing IP addresses completely
-  * URL features are not necessarily reliable
+  * More derived features / Fewer OHE features - The number of features is currently almost 8000 which is a huge number and the value of all those one-hot encoded features is not necessarily high. That being said, it is what I chose to complete this challenge due to time constraints
+  * Possibly removing IP addresses completely - The attacker IP addresses are most often disposable and only used briefly. IP addresses are appropriate for network detection, but perhaps not malware classification
+  * URL features are not necessarily reliable - The host name is more disposable than even an IP address. The domain is difficult to classify though reputation engines do this at greater scale and utilizing that threat intelligence would be useful
+  * Utilizing GeoIP to resolve autonomous system number and geographic region would provide stronger features than simply using IP addresses
+  * More application layer protocols would provide a richer feature set
+    * ssh
+    * ftp
+    * smtp
+    * smb
 * Technique improvements
-  * Probably performing better packet inspection will result in better results. For example, I did not inspect HTTP Response results because they were difficult to parse in the time alloted
+  * I expect more in-depth analysis of the packet will result in better results. For example, I did not inspect HTTP Response results because they were difficult to parse in the time alloted. Also, HTTPS packets would help identify if a certificate was compromised and having a cert reputation engine would be useful
+  * Integrate more threat intelligence - Integrating a WHOIS service would allow me to enrich the IP address data with stronger features including GeoIP and ASN, as well as potentially the registrar
+* Evaluation improvements
+  * I realize while writing this that I could have omitted one of the malicious data sets to determine if the model could generalize to detecting it as malware (without having been trained on that data). Further, I might identify additional pcaps of data sets to determine if the model properly classifies them. I did not perform these steps due to time constraints.
