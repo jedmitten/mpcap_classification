@@ -8,3 +8,8 @@ scikit-learn
 # fastparquet
 pyarrow
 scipy
+matplotlib
+seaborn
+plotly
+chart_studio
+nfstream
